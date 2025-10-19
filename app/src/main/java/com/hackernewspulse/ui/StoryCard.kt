@@ -108,8 +108,9 @@ private fun getRelativeTime(epochSeconds: Long): String {
     val days = TimeUnit.MILLISECONDS.toDays(diff)
 
     return when {
-        minutes < 60 -> "$minutes minutes ago"
-        hours < 24 -> "$hours hours ago"
-        else -> "$days days ago"
+        minutes < 1 -> "just now"
+        minutes < 60 -> "$minutes ${if (minutes == 1L) "minute" else "minutes"} ago"
+        hours < 24 -> "$hours ${if (hours == 1L) "hour" else "hours"} ago"
+        else -> "$days ${if (days == 1L) "day" else "days"} ago"
     }
 }
