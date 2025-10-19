@@ -47,30 +47,29 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
         Column {
             TopBar(storyType = storyType, onTabSelected = { viewModel.setStoryType(it) })
 
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(stories.itemCount) {
-                    index ->
-                    stories[index]?.let { story ->
-                        StoryCard(story = story, onItemClick = { url ->
-                            openCustomTab(context, url)
-                        })
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (stories.loadState.refresh is LoadState.Loading) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Loading stories...", color = Color.White)
                     }
-                }
-
-                stories.apply {
-                    when {
-                        loadState.refresh is LoadState.Loading -> {
-                            item {
-                                Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        CircularProgressIndicator()
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("Loading stories...", color = Color.White)
-                                    }
-                                }
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(stories.itemCount) {
+                            index ->
+                            stories[index]?.let { story ->
+                                StoryCard(story = story, onItemClick = { url ->
+                                    openCustomTab(context, url)
+                                })
                             }
                         }
-                        loadState.append is LoadState.Loading -> {
+
+                        if (stories.loadState.append is LoadState.Loading) {
                             item {
                                 Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.Center) {
                                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
@@ -78,12 +77,6 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                                     Text("Loading more...", color = Color.White)
                                 }
                             }
-                        }
-                        loadState.refresh is LoadState.Error -> {
-                            item { Text("Error loading stories", color = Color.Red) }
-                        }
-                        loadState.append is LoadState.Error -> {
-                            item { Text("Error loading more stories", color = Color.Red) }
                         }
                     }
                 }
