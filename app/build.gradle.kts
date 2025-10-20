@@ -61,6 +61,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.34.0")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")

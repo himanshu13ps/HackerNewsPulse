@@ -29,11 +29,15 @@ import com.hackernewspulse.ui.theme.DarkBlue
 import com.hackernewspulse.ui.theme.LightBlue
 import com.hackernewspulse.viewmodel.MainViewModel
 
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+
 @Composable
 fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     val stories = viewModel.stories.collectAsLazyPagingItems()
     val storyType by viewModel.storyType.collectAsState()
     val context = LocalContext.current
+    val isRefreshing = stories.loadState.refresh is LoadState.Loading
 
     Box(
         modifier = Modifier
@@ -47,15 +51,16 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
         Column {
             TopBar(storyType = storyType, onTabSelected = { viewModel.setStoryType(it) })
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                if (stories.loadState.refresh is LoadState.Loading) {
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(isRefreshing),
+                onRefresh = { stories.refresh() }
+            ) {
+                if (isRefreshing) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(8.dp))
                         Text("Loading stories...", color = Color.White)
                     }
                 } else {
