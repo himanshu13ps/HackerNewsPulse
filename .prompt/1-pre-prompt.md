@@ -1,0 +1,18 @@
+Help me write a detailed prompt for creating a native Android mobile app titled "Hacker News Pulse". The app should support following functionality
+- shows data from hacker news and presents it in a card based UI. 
+- The app title should be on top left aligned - `Hacker News Pulse`
+- On top right aligned should be a selector between top/new stories
+    - The top stories should be selected by default
+    - While fetching stories the first time when there are no cards to display, show a centre aligned message in the middle of the screen `{spinning icon} Loading stories...`
+- The cards should following (see attached scrrenshot for reference):
+    - show the title of the story in bold
+    - in first row below title - left aligned author name in the format `by {author}`
+    - in first row below title - right aligned source of the story
+    - in second row below title - left aligned publish date in the format - `XX {minute/minutes/hour/hours/day/days}` ago
+    - in second row below title - right aligned score of the story in format `YY {point/points}`
+- On clicking the card, the story should open in a browser. 
+- By default, 20 cards should load in an order sorted by publish date, with latest story on top. 
+- Card display should support continuous scroll
+    - use all the best practices of continuous scroll so that the app state keeps about 50 pages in memory and discards older ones so as not crash the app due to un-maintainable state.
+    - Scrolling up or down should re-fetch the previous or next cards if thet are not in memory
+    - While fetching, display `{spinning icon} Loading more...` at the bottom of the cards or on top, based on the scrolling direction
