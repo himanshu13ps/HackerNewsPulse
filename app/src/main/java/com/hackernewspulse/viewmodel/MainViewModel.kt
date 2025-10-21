@@ -35,6 +35,25 @@ class MainViewModel @Inject constructor(
         fetchStories()
     }
 
+    /**
+     * Invalidates cache for the current story type and refreshes data
+     * Called when user performs pull-to-refresh
+     */
+    fun refreshStories() {
+        viewModelScope.launch {
+            // Invalidate cache for current story type only
+            repository.invalidateCache(_storyType.value)
+            // Fetch fresh data
+            fetchStories()
+        }
+    }
+
+    /**
+     * Gets cache statistics for debugging purposes
+     * In a production app, this could be used for analytics or debugging
+     */
+    fun getCacheStats() = repository.getCacheStats()
+
     private fun fetchStories() {
         viewModelScope.launch {
             repository.getStories(_storyType.value).cachedIn(viewModelScope).collectLatest {

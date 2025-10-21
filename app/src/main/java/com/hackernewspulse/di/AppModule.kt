@@ -1,7 +1,10 @@
 package com.hackernewspulse.di
 
+import com.hackernewspulse.data.cache.StoryCacheManager
+import com.hackernewspulse.data.cache.StoryCacheManagerImpl
 import com.hackernewspulse.data.remote.HackerNewsApiService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,4 +34,15 @@ object AppModule {
     fun provideHackerNewsApiService(retrofit: Retrofit): HackerNewsApiService {
         return retrofit.create(HackerNewsApiService::class.java)
     }
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class CacheModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindStoryCacheManager(
+        storyCacheManagerImpl: StoryCacheManagerImpl
+    ): StoryCacheManager
 }

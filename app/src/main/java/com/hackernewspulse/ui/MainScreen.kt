@@ -7,9 +7,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,6 +40,12 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     val storyType by viewModel.storyType.collectAsState()
     val context = LocalContext.current
     val isRefreshing = stories.loadState.refresh is LoadState.Loading
+    val listState = rememberLazyListState()
+    
+    // Reset scroll position when story type changes
+    LaunchedEffect(storyType) {
+        listState.animateScrollToItem(0)
+    }
 
     Box(
         modifier = Modifier
@@ -53,7 +61,10 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
 
             SwipeRefresh(
                 state = rememberSwipeRefreshState(isRefreshing),
-                onRefresh = { stories.refresh() }
+                onRefresh = { 
+                    // Invalidate cache for current story type and refresh
+                    viewModel.refreshStories()
+                }
             ) {
                 if (isRefreshing) {
                     Column(
@@ -64,7 +75,10 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                         Text("Loading stories...", color = Color.White)
                     }
                 } else {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
                         items(stories.itemCount) {
                             index ->
                             stories[index]?.let { story ->
