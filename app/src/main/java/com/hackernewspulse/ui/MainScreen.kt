@@ -3,6 +3,7 @@ package com.hackernewspulse.ui
 import android.content.Context
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,19 +21,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.hackernewspulse.R
 import com.hackernewspulse.data.paging.StoryType
 import com.hackernewspulse.ui.theme.DarkBlue
 import com.hackernewspulse.ui.theme.LightBlue
 import com.hackernewspulse.viewmodel.MainViewModel
-
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @Composable
 fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
@@ -113,14 +115,22 @@ fun TopBar(storyType: StoryType, onTabSelected: (StoryType) -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "Hacker News",
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                fontSize = 28.sp
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(id = R.drawable.main_screen_icon),
+                contentDescription = null,
+                modifier = Modifier.size(32.dp)
             )
-        )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Hacker News",
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    fontSize = 28.sp
+                )
+            )
+        }
         StoryTypeSelector(selectedType = storyType, onTabSelected = onTabSelected)
     }
 }
