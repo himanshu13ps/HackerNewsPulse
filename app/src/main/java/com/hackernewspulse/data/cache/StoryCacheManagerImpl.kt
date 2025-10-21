@@ -31,7 +31,7 @@ class StoryCacheManagerImpl @Inject constructor(
     private val statsMutex = Mutex()
     
     companion object {
-        private const val DEFAULT_PAGE_SIZE = 20
+        private const val DEFAULT_PAGE_SIZE = 10
         private const val FIRST_PAGE = 1
     }
     
