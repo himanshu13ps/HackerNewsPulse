@@ -54,7 +54,7 @@ class StoryCacheManagerImpl @Inject constructor(
         } catch (e: Exception) {
             // Log error but don't throw to avoid blocking app startup
             // In a real app, you would use proper logging here
-            println("Cache preload failed: ${e.message}")
+            println("HackerNewsPulseLog: Cache preload failed: ${e.message}")
         }
     }
     
@@ -69,7 +69,7 @@ class StoryCacheManagerImpl @Inject constructor(
             if (storyIds.isNotEmpty()) {
                 // Get first page of stories (20 items)
                 val preloadIds = storyIds.take(DEFAULT_PAGE_SIZE)
-                println("Preloading $storyType: ${preloadIds.size} items")
+                println("HackerNewsPulseLog: Preloading $storyType: ${preloadIds.size} items")
                 val stories = coroutineScope {
                     preloadIds.map { id ->
                         async { apiService.getStory(id) }
@@ -78,11 +78,11 @@ class StoryCacheManagerImpl @Inject constructor(
                 
                 // Add to cache
                 addStoriesToCache(storyType, stories, FIRST_PAGE)
-                println("Cached $storyType: ${stories.size} items")
+                println("HackerNewsPulseLog: Cached $storyType: ${stories.size} items")
             }
         } catch (e: Exception) {
             // Log error but continue with other story type
-            println("Failed to preload $storyType stories: ${e.message}")
+            println("HackerNewsPulseLog: Failed to preload $storyType stories: ${e.message}")
         }
     }
     

@@ -27,7 +27,7 @@ class CachedHackerNewsPagingSource(
 
             // First, try to get data from cache
             val cachedStories = cacheManager.getCachedStories(storyType, page, pageSize)
-            println("Cache check for $storyType page $page: ${cachedStories?.size ?: 0} items found")
+            println("HackerNewsPulseLog: Cache check for $storyType page $page: ${cachedStories?.size ?: 0} items found")
             if (cachedStories != null && cachedStories.isNotEmpty()) {
                 // Return cached data immediately for fast display
                 return LoadResult.Page(
@@ -52,7 +52,7 @@ class CachedHackerNewsPagingSource(
             }
             val toIndex = minOf(fromIndex + pageSize, storyIds.size)
             val idsToFetch = storyIds.subList(fromIndex, toIndex)
-            println("Loading from network for $storyType page $page: ${idsToFetch.size} items (indices $fromIndex-$toIndex)")
+            println("HackerNewsPulseLog: Loading from network for $storyType page $page: ${idsToFetch.size} items (indices $fromIndex-$toIndex)")
 
             val stories = coroutineScope {
                 idsToFetch.map { id ->

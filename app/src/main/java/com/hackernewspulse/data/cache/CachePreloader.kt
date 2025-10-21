@@ -29,7 +29,7 @@ class CachePreloader @Inject constructor(
             } catch (e: Exception) {
                 // Log error but don't crash the app
                 // In a real app, you would use proper logging here
-                println("Cache preloading failed: ${e.message}")
+                println("HackerNewsPulseLog: Cache preloading failed: ${e.message}")
             }
         }
     }
@@ -43,7 +43,7 @@ class CachePreloader @Inject constructor(
             cacheManager.preloadCache()
         } catch (e: Exception) {
             // Log error but don't throw to avoid blocking caller
-            println("Synchronous cache preloading failed: ${e.message}")
+            println("HackerNewsPulseLog: Synchronous cache preloading failed: ${e.message}")
         }
     }
 }
