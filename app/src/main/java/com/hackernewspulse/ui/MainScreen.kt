@@ -58,7 +58,11 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 )
             )
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .systemBarsPadding() // Add padding for system bars
+        ) {
             TopBar(storyType = storyType, onTabSelected = { viewModel.setStoryType(it) })
 
             SwipeRefresh(
