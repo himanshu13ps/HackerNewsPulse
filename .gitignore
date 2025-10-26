@@ -68,3 +68,7 @@ fastlane/test_output
 
 # Hilt
 .idea/hilt_plugin_state.xml
+
+# macOS
+.DS_Store
+**/.DS_Store
