@@ -32,8 +32,6 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.hackernewspulse.R
 import com.hackernewspulse.data.paging.StoryType
-import com.hackernewspulse.ui.theme.DarkBlue
-import com.hackernewspulse.ui.theme.LightBlue
 import com.hackernewspulse.viewmodel.MainViewModel
 
 @Composable
@@ -54,7 +52,10 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             .fillMaxSize()
             .background(
                 brush = Brush.linearGradient(
-                    colors = listOf(LightBlue, DarkBlue)
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.secondary
+                    )
                 )
             )
     ) {
@@ -78,7 +79,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Loading stories...", color = Color.White)
+                        Text("Loading stories...", color = MaterialTheme.colorScheme.onBackground)
                     }
                 } else {
                     LazyColumn(
@@ -99,7 +100,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                                 Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.Center) {
                                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Loading more...", color = Color.White)
+                                    Text("Loading more...", color = MaterialTheme.colorScheme.onBackground)
                                 }
                             }
                         }
@@ -130,7 +131,7 @@ fun TopBar(storyType: StoryType, onTabSelected: (StoryType) -> Unit) {
                 text = "Hacker News",
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 28.sp
                 )
             )
@@ -153,13 +154,13 @@ fun StoryTypeSelector(selectedType: StoryType, onTabSelected: (StoryType) -> Uni
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(if (isSelected) LightBlue.copy(alpha = 0.5f) else Color.Transparent)
+                    .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else Color.Transparent)
                     .clickable { onTabSelected(type) }
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(
                     text = type.name.toLowerCase().capitalize(),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                 )
             }

@@ -17,8 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.hackernewspulse.data.remote.responses.StoryResponse
-import com.hackernewspulse.ui.theme.TextPrimary
-import com.hackernewspulse.ui.theme.TextSecondary
 import java.util.concurrent.TimeUnit
 
 @Composable
@@ -37,7 +35,7 @@ fun StoryCard(story: StoryResponse, onItemClick: (String) -> Unit) {
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
@@ -53,7 +51,7 @@ fun StoryCard(story: StoryResponse, onItemClick: (String) -> Unit) {
                 Text(
                     text = "by ${story.by}",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp
                     )
                 )
@@ -70,7 +68,7 @@ fun StoryCard(story: StoryResponse, onItemClick: (String) -> Unit) {
                             Text(
                                 text = domain,
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = TextSecondary,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 12.sp
                                 )
                             )
@@ -90,7 +88,7 @@ fun StoryCard(story: StoryResponse, onItemClick: (String) -> Unit) {
                 Text(
                     text = "⏰ $timeAgo",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp
                     )
                 )
@@ -98,7 +96,7 @@ fun StoryCard(story: StoryResponse, onItemClick: (String) -> Unit) {
                 Text(
                     text = "$score ${if (score == 1) "point" else "points"}",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        color = TextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp
                     )
                 )
