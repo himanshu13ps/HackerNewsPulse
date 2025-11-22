@@ -32,6 +32,7 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.hackernewspulse.R
 import com.hackernewspulse.data.paging.StoryType
+import com.hackernewspulse.ui.theme.storySelector
 import com.hackernewspulse.viewmodel.MainViewModel
 
 @Composable
@@ -154,7 +155,7 @@ fun StoryTypeSelector(selectedType: StoryType, onTabSelected: (StoryType) -> Uni
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else Color.Transparent)
+                    .background(if (isSelected) MaterialTheme.colorScheme.storySelector else Color.Transparent)
                     .clickable { onTabSelected(type) }
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
