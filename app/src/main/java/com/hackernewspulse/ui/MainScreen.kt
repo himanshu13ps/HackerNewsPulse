@@ -87,34 +87,40 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                     viewModel.refreshStories()
                 }
             ) {
-                if (isRefreshing) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Loading stories...", color = MaterialTheme.colorScheme.onBackground)
-                    }
-                } else {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(stories.itemCount) {
-                            index ->
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (isRefreshing && stories.itemCount == 0) {
+                        items(10) {
+                            StoryCardSkeleton()
+                        }
+                    } else {
+                        items(stories.itemCount) { index ->
                             stories[index]?.let { story ->
-                                StoryCard(story = story, index = index, onItemClick = { url ->
-                                    openCustomTab(context, url)
-                                })
-                            }
+                                StoryCard(
+                                    story = story,
+                                    index = index,
+                                    onItemClick = { url -> openCustomTab(context, url) },
+                                    onFetchDetails = { viewModel.getStoryDetail(it) }
+                                )
+                            } ?: StoryCardSkeleton()
                         }
 
                         if (stories.loadState.append is LoadState.Loading) {
                             item {
-                                Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.Center) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
                                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Loading more...", color = MaterialTheme.colorScheme.onBackground)
+                                    Text(
+                                        "Loading more...",
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
                                 }
                             }
                         }

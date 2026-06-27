@@ -52,16 +52,10 @@ class CachedHackerNewsPagingSource(
             }
             val toIndex = minOf(fromIndex + pageSize, storyIds.size)
             val idsToFetch = storyIds.subList(fromIndex, toIndex)
-            println("HackerNewsPulseLog: Loading from network for $storyType page $page: ${idsToFetch.size} items (indices $fromIndex-$toIndex)")
+            println("HackerNewsPulseLog: Loading shallow stories for $storyType page $page: ${idsToFetch.size} items")
 
-            val stories = coroutineScope {
-                idsToFetch.map { id ->
-                    async { apiService.getStory(id) }
-                }.awaitAll()
-            }
-
-            // Update cache with newly loaded data
-            cacheManager.addStoriesToCache(storyType, stories, page)
+            // Return shallow stories immediately to support card-by-card rendering
+            val stories = idsToFetch.map { id -> StoryResponse(id = id) }
 
             LoadResult.Page(
                 data = stories,

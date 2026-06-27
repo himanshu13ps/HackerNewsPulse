@@ -44,6 +44,16 @@ interface StoryCacheManager {
     suspend fun hasCachedData(storyType: StoryType): Boolean
     
     /**
+     * Retrieves a single cached story by its ID
+     */
+    suspend fun getStoryById(id: Long): StoryResponse?
+
+    /**
+     * Adds a single story to the detail cache
+     */
+    suspend fun saveStory(story: StoryResponse)
+
+    /**
      * Returns current cache statistics
      */
     fun getCacheStats(): CacheStats

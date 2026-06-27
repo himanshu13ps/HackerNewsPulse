@@ -11,6 +11,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,10 +26,47 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.hackernewspulse.data.remote.responses.StoryResponse
 import com.hackernewspulse.ui.theme.secondaryAccent
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 @Composable
-fun StoryCard(story: StoryResponse, index: Int, onItemClick: (String) -> Unit) {
+fun StoryCard(
+    story: StoryResponse,
+    index: Int,
+    onItemClick: (String) -> Unit,
+    onFetchDetails: suspend (Long) -> StoryResponse
+) {
+    var storyState by remember(story.id) { 
+        mutableStateOf(if (story.title != null) story else null) 
+    }
+
+    LaunchedEffect(story.id) {
+        if (storyState == null) {
+            try {
+                val detail = onFetchDetails(story.id)
+                storyState = detail
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+
+    val currentStory = storyState
+    if (currentStory == null) {
+        StoryCardSkeleton()
+    } else {
+        if (!currentStory.url.isNullOrBlank()) {
+            RealStoryCard(story = currentStory, index = index, onItemClick = onItemClick)
+        } else {
+            // Optional: Handle items without URL (though filtered earlier)
+            // For now, render nothing or a small spacer to avoid gaps
+            Spacer(modifier = Modifier.height(0.dp))
+        }
+    }
+}
+
+@Composable
+private fun RealStoryCard(story: StoryResponse, index: Int, onItemClick: (String) -> Unit) {
     val isPrimary = index % 2 == 0
     val accentColor = if (isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryAccent
 
@@ -129,6 +171,59 @@ fun StoryCard(story: StoryResponse, index: Int, onItemClick: (String) -> Unit) {
                             )
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StoryCardSkeleton() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(4.dp)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+            )
+            Column(modifier = Modifier.padding(16.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(20.dp)
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .height(14.dp)
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Box(
+                        modifier = Modifier
+                            .width(60.dp)
+                            .height(12.dp)
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(40.dp)
+                            .height(20.dp)
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                    )
                 }
             }
         }

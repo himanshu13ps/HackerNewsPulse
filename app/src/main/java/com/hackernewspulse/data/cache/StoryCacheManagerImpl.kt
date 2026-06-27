@@ -23,6 +23,9 @@ class StoryCacheManagerImpl @Inject constructor(
     // Thread-safe cache storage: StoryType -> Page -> List<StoryResponse>
     private val cache = ConcurrentHashMap<StoryType, ConcurrentHashMap<Int, List<StoryResponse>>>()
     
+    // Flat cache for individual story details to support card-by-card rendering
+    private val storyDetailCache = ConcurrentHashMap<Long, StoryResponse>()
+
     // Mutex for write operations to ensure thread safety
     private val writeMutex = Mutex()
     
@@ -100,10 +103,22 @@ class StoryCacheManagerImpl @Inject constructor(
         }
     }
     
+    override suspend fun getStoryById(id: Long): StoryResponse? {
+        return storyDetailCache[id]
+    }
+
+    override suspend fun saveStory(story: StoryResponse) {
+        storyDetailCache[story.id] = story
+    }
+
     override suspend fun addStoriesToCache(storyType: StoryType, stories: List<StoryResponse>, page: Int) {
         writeMutex.withLock {
             val typeCache = cache.getOrPut(storyType) { ConcurrentHashMap() }
             typeCache[page] = stories
+            // Also populate the flat detail cache
+            stories.forEach { story ->
+                storyDetailCache[story.id] = story
+            }
         }
     }
     

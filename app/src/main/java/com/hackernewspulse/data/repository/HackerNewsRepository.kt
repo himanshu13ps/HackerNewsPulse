@@ -20,10 +20,26 @@ class HackerNewsRepository @Inject constructor(
             config = PagingConfig(
                 pageSize = 10,
                 initialLoadSize = 10,  // Control initial load size to prevent loading 60 items
-                enablePlaceholders = false
+                enablePlaceholders = true
             ),
             pagingSourceFactory = { CachedHackerNewsPagingSource(apiService, storyType, cacheManager) }
         ).flow
+    }
+
+    /**
+     * Fetches a single story by ID, checking the cache first
+     */
+    suspend fun getStory(id: Long): StoryResponse {
+        // Try cache first
+        cacheManager.getStoryById(id)?.let { return it }
+        
+        // Fetch from network
+        val story = apiService.getStory(id)
+        
+        // Save to cache
+        cacheManager.saveStory(story)
+        
+        return story
     }
     
     /**

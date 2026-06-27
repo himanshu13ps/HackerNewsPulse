@@ -50,6 +50,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    suspend fun getStoryDetail(id: Long): StoryResponse {
+        return repository.getStory(id)
+    }
+
     fun setStoryType(type: StoryType) {
         _storyType.value = type
         fetchStories()
@@ -77,11 +81,6 @@ class MainViewModel @Inject constructor(
     private fun fetchStories() {
         viewModelScope.launch {
             repository.getStories(_storyType.value)
-                .map { pagingData ->
-                    pagingData.filter { story ->
-                        !story.url.isNullOrBlank()
-                    }
-                }
                 .cachedIn(viewModelScope)
                 .collectLatest {
                     _stories.value = it
