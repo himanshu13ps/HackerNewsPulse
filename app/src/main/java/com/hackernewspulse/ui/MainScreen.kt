@@ -11,14 +11,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,12 +62,21 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 .systemBarsPadding() // Add padding for system bars
         ) {
             val currentTheme by viewModel.theme.collectAsState()
+            var showSettings by remember { mutableStateOf(false) }
+
             TopBar(
                 storyType = storyType,
                 onTabSelected = { viewModel.setStoryType(it) },
-                currentTheme = currentTheme,
-                onThemeSelected = { viewModel.setTheme(it) }
+                onSettingsClick = { showSettings = true }
             )
+
+            if (showSettings) {
+                SettingsOverlay(
+                    currentTheme = currentTheme,
+                    onThemeSelected = { viewModel.setTheme(it) },
+                    onDismiss = { showSettings = false }
+                )
+            }
 
             SwipeRefresh(
                 state = rememberSwipeRefreshState(isRefreshing),
@@ -119,8 +127,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
 fun TopBar(
     storyType: StoryType,
     onTabSelected: (StoryType) -> Unit,
-    currentTheme: AppTheme,
-    onThemeSelected: (AppTheme) -> Unit
+    onSettingsClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -129,32 +136,70 @@ fun TopBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(id = R.drawable.main_screen_icon),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(32.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "HN Pulse",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                ),
-                maxLines = 1
+                text = "Hacker News",
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 28.sp
+                )
             )
         }
         
         Row(verticalAlignment = Alignment.CenterVertically) {
-            ThemeSelector(currentTheme = currentTheme, onThemeSelected = onThemeSelected)
-            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(onClick = onSettingsClick) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            Spacer(modifier = Modifier.width(4.dp))
             StoryTypeSelector(selectedType = storyType, onTabSelected = onTabSelected)
         }
     }
+}
+
+@Composable
+fun SettingsOverlay(
+    currentTheme: AppTheme,
+    onThemeSelected: (AppTheme) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Settings") },
+        text = {
+            Column {
+                Text(
+                    text = "Theme",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                ThemeSelector(currentTheme = currentTheme, onThemeSelected = onThemeSelected)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Check, contentDescription = null)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Done")
+                }
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurface
+    )
 }
 
 @Composable
