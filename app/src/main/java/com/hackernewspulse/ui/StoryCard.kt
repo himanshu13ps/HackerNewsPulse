@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.hackernewspulse.data.remote.responses.StoryResponse
 import java.util.concurrent.TimeUnit
 
@@ -63,7 +64,19 @@ fun StoryCard(story: StoryResponse, onItemClick: (String) -> Unit) {
                         val domain = Uri.parse(it).host?.removePrefix("www.")
                         if (domain != null) {
                             Text(
-                                text = " • $domain",
+                                text = " • ",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+                            AsyncImage(
+                                model = "https://www.google.com/s2/favicons?sz=64&domain=$domain",
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = domain,
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 ),
