@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -51,14 +50,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.secondary
-                    )
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -146,23 +138,24 @@ fun StoryTypeSelector(selectedType: StoryType, onTabSelected: (StoryType) -> Uni
     val types = StoryType.values()
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(Color.Black.copy(alpha = 0.2f))
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
             .padding(4.dp)
     ) {
         types.forEach { type ->
             val isSelected = type == selectedType
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(if (isSelected) MaterialTheme.colorScheme.storySelector else Color.Transparent)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
                     .clickable { onTabSelected(type) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
-                    text = type.name.toLowerCase().capitalize(),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    text = type.name.lowercase().replaceFirstChar { it.uppercase() },
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                 )
             }
         }
