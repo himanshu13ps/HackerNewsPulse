@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +35,7 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.hackernewspulse.R
 import com.hackernewspulse.data.paging.StoryType
+import com.hackernewspulse.data.pref.AppTheme
 import com.hackernewspulse.ui.theme.storySelector
 import com.hackernewspulse.viewmodel.MainViewModel
 
@@ -57,7 +62,13 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 .fillMaxSize()
                 .systemBarsPadding() // Add padding for system bars
         ) {
-            TopBar(storyType = storyType, onTabSelected = { viewModel.setStoryType(it) })
+            val currentTheme by viewModel.theme.collectAsState()
+            TopBar(
+                storyType = storyType,
+                onTabSelected = { viewModel.setStoryType(it) },
+                currentTheme = currentTheme,
+                onThemeSelected = { viewModel.setTheme(it) }
+            )
 
             SwipeRefresh(
                 state = rememberSwipeRefreshState(isRefreshing),
@@ -105,7 +116,12 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
 }
 
 @Composable
-fun TopBar(storyType: StoryType, onTabSelected: (StoryType) -> Unit) {
+fun TopBar(
+    storyType: StoryType,
+    onTabSelected: (StoryType) -> Unit,
+    currentTheme: AppTheme,
+    onThemeSelected: (AppTheme) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -113,23 +129,79 @@ fun TopBar(storyType: StoryType, onTabSelected: (StoryType) -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.main_screen_icon),
                 contentDescription = null,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Hacker News",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 28.sp
-                )
+                text = "HN Pulse",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onBackground
+                ),
+                maxLines = 1
             )
         }
-        StoryTypeSelector(selectedType = storyType, onTabSelected = onTabSelected)
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ThemeSelector(currentTheme = currentTheme, onThemeSelected = onThemeSelected)
+            Spacer(modifier = Modifier.width(8.dp))
+            StoryTypeSelector(selectedType = storyType, onTabSelected = onTabSelected)
+        }
+    }
+}
+
+@Composable
+fun ThemeSelector(currentTheme: AppTheme, onThemeSelected: (AppTheme) -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+            .padding(4.dp)
+    ) {
+        ThemeOption(
+            icon = Icons.Default.Computer,
+            isSelected = currentTheme == AppTheme.SYSTEM,
+            onClick = { onThemeSelected(AppTheme.SYSTEM) }
+        )
+        ThemeOption(
+            icon = Icons.Default.LightMode,
+            isSelected = currentTheme == AppTheme.LIGHT,
+            onClick = { onThemeSelected(AppTheme.LIGHT) }
+        )
+        ThemeOption(
+            icon = Icons.Default.DarkMode,
+            isSelected = currentTheme == AppTheme.DARK,
+            onClick = { onThemeSelected(AppTheme.DARK) }
+        )
+    }
+}
+
+@Composable
+fun ThemeOption(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+            .clickable { onClick() }
+            .padding(8.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 

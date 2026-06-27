@@ -6,20 +6,25 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.hackernewspulse.data.paging.StoryType
+import com.hackernewspulse.data.pref.AppTheme
+import com.hackernewspulse.data.pref.ThemeSettings
 import com.hackernewspulse.data.remote.responses.StoryResponse
 import com.hackernewspulse.data.repository.HackerNewsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val repository: HackerNewsRepository
+    private val repository: HackerNewsRepository,
+    private val themeSettings: ThemeSettings
 ) : ViewModel() {
 
     private val _stories = MutableStateFlow<PagingData<StoryResponse>>(PagingData.empty())
@@ -28,8 +33,21 @@ class MainViewModel @Inject constructor(
     private val _storyType = MutableStateFlow(StoryType.TOP)
     val storyType: StateFlow<StoryType> = _storyType.asStateFlow()
 
+    val theme: StateFlow<AppTheme> = themeSettings.themeStream
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = AppTheme.SYSTEM
+        )
+
     init {
         fetchStories()
+    }
+
+    fun setTheme(theme: AppTheme) {
+        viewModelScope.launch {
+            themeSettings.setTheme(theme)
+        }
     }
 
     fun setStoryType(type: StoryType) {
