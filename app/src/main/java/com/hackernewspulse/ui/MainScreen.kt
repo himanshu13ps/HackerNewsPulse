@@ -21,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -35,6 +36,7 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.hackernewspulse.R
 import com.hackernewspulse.data.paging.StoryType
 import com.hackernewspulse.data.pref.AppTheme
+import com.hackernewspulse.ui.theme.secondaryAccent
 import com.hackernewspulse.ui.theme.storySelector
 import com.hackernewspulse.viewmodel.MainViewModel
 
@@ -101,7 +103,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                         items(stories.itemCount) {
                             index ->
                             stories[index]?.let { story ->
-                                StoryCard(story = story, onItemClick = { url ->
+                                StoryCard(story = story, index = index, onItemClick = { url ->
                                     openCustomTab(context, url)
                                 })
                             }
@@ -259,18 +261,32 @@ fun StoryTypeSelector(selectedType: StoryType, onTabSelected: (StoryType) -> Uni
             .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
             .padding(4.dp)
     ) {
+        val secondaryAccent = MaterialTheme.colorScheme.secondaryAccent
         types.forEach { type ->
             val isSelected = type == selectedType
+            val backgroundModifier = if (isSelected) {
+                Modifier.background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            secondaryAccent
+                        )
+                    )
+                )
+            } else {
+                Modifier.background(Color.Transparent)
+            }
+
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                    .then(backgroundModifier)
                     .clickable { onTabSelected(type) }
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
                     text = type.name.lowercase().replaceFirstChar { it.uppercase() },
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                 )
