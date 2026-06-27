@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import com.hackernewspulse.data.paging.StoryType
 import com.hackernewspulse.data.remote.responses.StoryResponse
 import com.hackernewspulse.data.repository.HackerNewsRepository
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -56,9 +58,16 @@ class MainViewModel @Inject constructor(
 
     private fun fetchStories() {
         viewModelScope.launch {
-            repository.getStories(_storyType.value).cachedIn(viewModelScope).collectLatest {
-                _stories.value = it
-            }
+            repository.getStories(_storyType.value)
+                .map { pagingData ->
+                    pagingData.filter { story ->
+                        !story.url.isNullOrBlank()
+                    }
+                }
+                .cachedIn(viewModelScope)
+                .collectLatest {
+                    _stories.value = it
+                }
         }
     }
 }
