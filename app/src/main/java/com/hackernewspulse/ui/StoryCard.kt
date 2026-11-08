@@ -18,15 +18,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.hackernewspulse.data.remote.responses.StoryResponse
 import com.hackernewspulse.ui.theme.secondaryAccent
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 @Composable
@@ -34,19 +36,21 @@ fun StoryCard(
     story: StoryResponse,
     index: Int,
     onItemClick: (String) -> Unit,
-    onFetchDetails: suspend (Long) -> StoryResponse
+    onFetchDetails: suspend (Long) -> StoryResponse?
 ) {
-    var storyState by remember(story.id) { 
-        mutableStateOf(if (story.title != null) story else null) 
+    var storyState by remember(story.id) {
+        mutableStateOf(if (!story.title.isNullOrBlank() && !story.url.isNullOrBlank()) story else null)
     }
 
     LaunchedEffect(story.id) {
         if (storyState == null) {
             try {
                 val detail = onFetchDetails(story.id)
-                storyState = detail
+                if (detail != null) {
+                    storyState = detail
+                }
             } catch (e: Exception) {
-                // Handle error
+                // Keep skeleton if transient error occurs
             }
         }
     }
@@ -55,13 +59,7 @@ fun StoryCard(
     if (currentStory == null) {
         StoryCardSkeleton()
     } else {
-        if (!currentStory.url.isNullOrBlank()) {
-            RealStoryCard(story = currentStory, index = index, onItemClick = onItemClick)
-        } else {
-            // Optional: Handle items without URL (though filtered earlier)
-            // For now, render nothing or a small spacer to avoid gaps
-            Spacer(modifier = Modifier.height(0.dp))
-        }
+        RealStoryCard(story = currentStory, index = index, onItemClick = onItemClick)
     }
 }
 
@@ -69,6 +67,14 @@ fun StoryCard(
 private fun RealStoryCard(story: StoryResponse, index: Int, onItemClick: (String) -> Unit) {
     val isPrimary = index % 2 == 0
     val accentColor = if (isPrimary) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryAccent
+
+    val domain = remember(story.url) {
+        story.url?.let { Uri.parse(it).host?.removePrefix("www.") }
+    }
+    val timeAgo = remember(story.time) {
+        story.time?.let { getRelativeTime(it) } ?: ""
+    }
+    val context = LocalContext.current
 
     Card(
         modifier = Modifier
@@ -82,95 +88,97 @@ private fun RealStoryCard(story: StoryResponse, index: Int, onItemClick: (String
             contentColor = MaterialTheme.colorScheme.onSurface
         )
     ) {
-        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-            // Left vertical accent bar
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(4.dp)
-                    .background(accentColor)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    drawRect(
+                        color = accentColor,
+                        size = Size(width = 4.dp.toPx(), height = size.height)
+                    )
+                }
+                .padding(start = 20.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+        ) {
+            Text(
+                text = story.title ?: "No title",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = 22.sp
+                ),
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
 
-            Column(modifier = Modifier.padding(16.dp)) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = story.title ?: "No title",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 22.sp
-                    ),
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "by ${story.by}",
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            color = accentColor,
-                            fontWeight = FontWeight.Medium
-                        )
+                    text = "by ${story.by ?: "unknown"}",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = accentColor,
+                        fontWeight = FontWeight.Medium
                     )
-                    story.url?.let {
-                        val domain = Uri.parse(it).host?.removePrefix("www.")
-                        if (domain != null) {
-                            Text(
-                                text = " • ",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            )
-                            AsyncImage(
-                                model = "https://www.google.com/s2/favicons?sz=64&domain=$domain",
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = domain,
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val timeAgo = story.time?.let { getRelativeTime(it) } ?: ""
+                )
+                if (domain != null) {
                     Text(
-                        text = "🕒 $timeAgo",
-                        style = MaterialTheme.typography.labelSmall.copy(
+                        text = " • ",
+                        style = MaterialTheme.typography.labelMedium.copy(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
-                    
-                    val score = story.score ?: 0
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = accentColor.copy(alpha = 0.2f),
-                        contentColor = accentColor
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            text = "$score ${if (score == 1) "pt" else "pts"}",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
+                    val faviconRequest = remember(domain) {
+                        ImageRequest.Builder(context)
+                            .data("https://www.google.com/s2/favicons?sz=64&domain=$domain")
+                            .crossfade(true)
+                            .build()
                     }
+                    AsyncImage(
+                        model = faviconRequest,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = domain,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🕒 $timeAgo",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+
+                val score = story.score ?: 0
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = accentColor.copy(alpha = 0.2f),
+                    contentColor = accentColor
+                ) {
+                    Text(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        text = "$score ${if (score == 1) "pt" else "pts"}",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                 }
             }
         }
@@ -179,6 +187,7 @@ private fun RealStoryCard(story: StoryResponse, index: Int, onItemClick: (String
 
 @Composable
 fun StoryCardSkeleton() {
+    val barColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -189,42 +198,44 @@ fun StoryCardSkeleton() {
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(4.dp)
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
-            )
-            Column(modifier = Modifier.padding(16.dp)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(20.dp)
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.4f)
-                        .height(14.dp)
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Box(
-                        modifier = Modifier
-                            .width(60.dp)
-                            .height(12.dp)
-                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                    )
-                    Box(
-                        modifier = Modifier
-                            .width(40.dp)
-                            .height(20.dp)
-                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    drawRect(
+                        color = barColor,
+                        size = Size(width = 4.dp.toPx(), height = size.height)
                     )
                 }
+                .padding(start = 20.dp, top = 16.dp, end = 16.dp, bottom = 16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(20.dp)
+                    .background(barColor, RoundedCornerShape(4.dp))
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.4f)
+                    .height(14.dp)
+                    .background(barColor, RoundedCornerShape(4.dp))
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Box(
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(12.dp)
+                        .background(barColor, RoundedCornerShape(4.dp))
+                )
+                Box(
+                    modifier = Modifier
+                        .width(40.dp)
+                        .height(20.dp)
+                        .background(barColor, RoundedCornerShape(4.dp))
+                )
             }
         }
     }

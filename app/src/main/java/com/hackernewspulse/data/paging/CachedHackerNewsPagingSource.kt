@@ -5,12 +5,13 @@ import androidx.paging.PagingState
 import com.hackernewspulse.data.cache.StoryCacheManager
 import com.hackernewspulse.data.remote.HackerNewsApiService
 import com.hackernewspulse.data.remote.responses.StoryResponse
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 
 /**
- * Enhanced paging source that implements cache-first loading strategy
+ * Enhanced paging source that implements a hybrid loading strategy:
+ * - Page 1: Returns cached hydrated stories if preloaded, or progressive card-by-card slots
+ *   for immediate first render while kicking off a 2-page bulk lookahead prefetch.
+ * - Pages 2+: Serves pre-filtered, hydrated stories in bulk from cache or bulk network fetch,
+ *   while maintaining a 2-page lookahead prefetch window for smooth scrolling.
  */
 class CachedHackerNewsPagingSource(
     private val apiService: HackerNewsApiService,
@@ -18,50 +19,43 @@ class CachedHackerNewsPagingSource(
     private val cacheManager: StoryCacheManager
 ) : PagingSource<Int, StoryResponse>() {
 
-    private var storyIds: List<Long> = emptyList()
-
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, StoryResponse> {
         return try {
             val page = params.key ?: 1
             val pageSize = params.loadSize
 
-            // First, try to get data from cache
-            val cachedStories = cacheManager.getCachedStories(storyType, page, pageSize)
-            println("HackerNewsPulseLog: Cache check for $storyType page $page: ${cachedStories?.size ?: 0} items found")
-            if (cachedStories != null && cachedStories.isNotEmpty()) {
-                // Return cached data immediately for fast display
+            if (page == 1) {
+                // First, check if Page 1 was already fully preloaded in cache
+                val cachedStories = cacheManager.getCachedStories(storyType, page, pageSize)
+                println("HackerNewsPulseLog: Cache check for $storyType page 1: ${cachedStories?.size ?: 0} items found")
+                if (!cachedStories.isNullOrEmpty()) {
+                    // Proactively prefetch Pages 2 and 3 in bulk
+                    cacheManager.prefetchNextPages(storyType, startPage = 2, pageSize = pageSize, pagesToPrefetch = 2)
+                    return LoadResult.Page(
+                        data = cachedStories,
+                        prevKey = null,
+                        nextKey = if (cachedStories.size < pageSize) null else 2
+                    )
+                }
+
+                // Page 1 cache miss: prepare progressive Page 1 slots (which also starts bulk prefetch for Pages 2 & 3)
+                val pageOneSlots = cacheManager.preparePageOneSlots(storyType, pageSize)
+                println("HackerNewsPulseLog: Prepared ${pageOneSlots.size} progressive slots for $storyType page 1")
                 return LoadResult.Page(
-                    data = cachedStories,
-                    prevKey = if (page == 1) null else page - 1,
-                    nextKey = if (cachedStories.size < pageSize) null else page + 1
+                    data = pageOneSlots,
+                    prevKey = null,
+                    nextKey = if (pageOneSlots.size < pageSize) null else 2
+                )
+            } else {
+                // Pages 2+: Always serve hydrated, URL-validated stories in bulk (from lookahead cache or bulk fetch)
+                val bulkStories = cacheManager.getOrFetchBulkPage(storyType, page, pageSize)
+                println("HackerNewsPulseLog: Loaded bulk page $page for $storyType: ${bulkStories.size} items")
+                return LoadResult.Page(
+                    data = bulkStories,
+                    prevKey = page - 1,
+                    nextKey = if (bulkStories.size < pageSize) null else page + 1
                 )
             }
-
-            // Cache miss - fetch from network
-            if (storyIds.isEmpty()) {
-                storyIds = when (storyType) {
-                    StoryType.TOP -> apiService.getTopStoryIds()
-                    StoryType.NEW -> apiService.getNewStoryIds()
-                }
-            }
-
-            // Standard pagination logic
-            val fromIndex = (page - 1) * pageSize
-            if (fromIndex >= storyIds.size) {
-                return LoadResult.Page(emptyList(), prevKey = null, nextKey = null)
-            }
-            val toIndex = minOf(fromIndex + pageSize, storyIds.size)
-            val idsToFetch = storyIds.subList(fromIndex, toIndex)
-            println("HackerNewsPulseLog: Loading shallow stories for $storyType page $page: ${idsToFetch.size} items")
-
-            // Return shallow stories immediately to support card-by-card rendering
-            val stories = idsToFetch.map { id -> StoryResponse(id = id) }
-
-            LoadResult.Page(
-                data = stories,
-                prevKey = if (page == 1) null else page - 1,
-                nextKey = if (toIndex >= storyIds.size) null else page + 1
-            )
         } catch (e: Exception) {
             LoadResult.Error(e)
         }

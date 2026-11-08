@@ -20,10 +20,19 @@ class HackerNewsRepository @Inject constructor(
             config = PagingConfig(
                 pageSize = 10,
                 initialLoadSize = 10,  // Control initial load size to prevent loading 60 items
-                enablePlaceholders = true
+                prefetchDistance = 5,
+                enablePlaceholders = false
             ),
             pagingSourceFactory = { CachedHackerNewsPagingSource(apiService, storyType, cacheManager) }
         ).flow
+    }
+
+    /**
+     * Resolves a story for a Page 1 card slot, checking cache first and automatically
+     * replacing URL-less stories from the reserve pool so no empty gaps occur.
+     */
+    suspend fun resolveStoryForCard(storyType: StoryType, id: Long): StoryResponse? {
+        return cacheManager.resolveStoryForCard(storyType, id)
     }
 
     /**

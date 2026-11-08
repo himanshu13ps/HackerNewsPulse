@@ -12,6 +12,11 @@ interface StoryCacheManager {
      * Preloads cache with first page of both TOP and NEW stories
      */
     suspend fun preloadCache()
+
+    /**
+     * Retrieves cached story IDs for a story type, or fetches and caches them from the network
+     */
+    suspend fun getOrFetchStoryIds(storyType: StoryType): List<Long>
     
     /**
      * Retrieves cached stories for a specific story type and page
@@ -21,6 +26,29 @@ interface StoryCacheManager {
      * @return List of cached stories or null if not cached
      */
     suspend fun getCachedStories(storyType: StoryType, page: Int, pageSize: Int): List<StoryResponse>?
+
+    /**
+     * Prepares Page 1 progressive slots for card-by-card rendering when Page 1 is not yet fully cached,
+     * and initiates background prefetching for subsequent pages.
+     */
+    suspend fun preparePageOneSlots(storyType: StoryType, pageSize: Int): List<StoryResponse>
+
+    /**
+     * Resolves a story for a given ID (or Page 1 slot), automatically replacing URL-less or failed
+     * stories with the next valid URL-bearing story from the reserve pool so no empty gaps occur.
+     */
+    suspend fun resolveStoryForCard(storyType: StoryType, id: Long): StoryResponse?
+
+    /**
+     * Gets or bulk-fetches a full page of valid URL-bearing stories (used for Pages 2+)
+     * and triggers background lookahead prefetching for subsequent pages.
+     */
+    suspend fun getOrFetchBulkPage(storyType: StoryType, page: Int, pageSize: Int): List<StoryResponse>
+
+    /**
+     * Triggers background bulk prefetching for upcoming pages
+     */
+    fun prefetchNextPages(storyType: StoryType, startPage: Int, pageSize: Int, pagesToPrefetch: Int = 2)
     
     /**
      * Adds stories to cache for a specific story type and page

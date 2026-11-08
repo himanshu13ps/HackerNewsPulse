@@ -81,7 +81,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             }
 
             SwipeRefresh(
-                state = rememberSwipeRefreshState(isRefreshing),
+                state = rememberSwipeRefreshState(isRefreshing && stories.itemCount > 0),
                 onRefresh = { 
                     // Invalidate cache for current story type and refresh
                     viewModel.refreshStories()
@@ -92,11 +92,45 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                     modifier = Modifier.fillMaxSize()
                 ) {
                     if (isRefreshing && stories.itemCount == 0) {
-                        items(10) {
+                        items(
+                            count = 10,
+                            key = { index -> "skeleton_$index" },
+                            contentType = { "skeleton" }
+                        ) {
                             StoryCardSkeleton()
                         }
+                    } else if (stories.loadState.refresh is LoadState.Error && stories.itemCount == 0) {
+                        item(key = "refresh_error", contentType = "error") {
+                            Column(
+                                modifier = Modifier
+                                    .fillParentMaxSize()
+                                    .padding(24.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Unable to load stories",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Please check your connection and try again.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(onClick = { stories.retry() }) {
+                                    Text("Retry")
+                                }
+                            }
+                        }
                     } else {
-                        items(stories.itemCount) { index ->
+                        items(
+                            count = stories.itemCount,
+                            key = { index -> stories.peek(index)?.id ?: "item_$index" },
+                            contentType = { "story_card" }
+                        ) { index ->
                             stories[index]?.let { story ->
                                 StoryCard(
                                     story = story,
@@ -108,12 +142,13 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                         }
 
                         if (stories.loadState.append is LoadState.Loading) {
-                            item {
+                            item(key = "append_loading", contentType = "loading") {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(16.dp),
-                                    horizontalArrangement = Arrangement.Center
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -121,6 +156,25 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                                         "Loading more...",
                                         color = MaterialTheme.colorScheme.onBackground
                                     )
+                                }
+                            }
+                        } else if (stories.loadState.append is LoadState.Error) {
+                            item(key = "append_error", contentType = "error") {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "Failed to load more",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    TextButton(onClick = { stories.retry() }) {
+                                        Text("Retry")
+                                    }
                                 }
                             }
                         }
