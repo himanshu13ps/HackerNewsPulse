@@ -27,4 +27,4 @@ val androidx.compose.material3.ColorScheme.storySelector: Color
     get() = if (this.background == DarkBackground) DarkStorySelector else LightStorySelector
 
 val androidx.compose.material3.ColorScheme.secondaryAccent: Color
-    get() = if (this.background == DarkBackground) DarkAccentBlue else LightAccentOrange
+    get() = DarkAccentBlue
