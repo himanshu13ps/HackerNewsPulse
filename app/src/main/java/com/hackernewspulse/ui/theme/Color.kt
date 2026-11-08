@@ -24,9 +24,7 @@ val DarkStorySelector = Color(0xFF4C1D95)
 
 // Extension property for custom storySelector color
 val androidx.compose.material3.ColorScheme.storySelector: Color
-    @androidx.compose.runtime.Composable
-    get() = if (androidx.compose.foundation.isSystemInDarkTheme()) DarkStorySelector else LightStorySelector
+    get() = if (this.background == DarkBackground) DarkStorySelector else LightStorySelector
 
 val androidx.compose.material3.ColorScheme.secondaryAccent: Color
-    @androidx.compose.runtime.Composable
-    get() = if (androidx.compose.foundation.isSystemInDarkTheme()) DarkAccentBlue else LightAccentOrange
+    get() = if (this.background == DarkBackground) DarkAccentBlue else LightAccentOrange
